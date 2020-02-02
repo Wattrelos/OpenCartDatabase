@@ -12,8 +12,13 @@ CREATE TABLE `table_address` (
   `zone_id` int(11) NOT NULL DEFAULT 0,
   `custom_field` text NOT NULL,
   PRIMARY KEY (`address_id`),
-  KEY `customer_id` (`customer_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  KEY `idx_country` (`country_id`),
+  KEY `idx_zone` (`zone_id`),
+  KEY `idx_customer` (`customer_id`),
+  CONSTRAINT `fk_address_to_customer` FOREIGN KEY (`customer_id`) REFERENCES `table_customer` (`customer_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_address_to_zone` FOREIGN KEY (`zone_id`) REFERENCES `table_zone` (`zone_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_country` FOREIGN KEY (`country_id`) REFERENCES `table_country` (`country_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_api` (
   `api_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -23,14 +28,16 @@ CREATE TABLE `table_api` (
   `date_added` datetime NOT NULL,
   `date_modified` datetime NOT NULL,
   PRIMARY KEY (`api_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_api_ip` (
   `api_ip_id` int(11) NOT NULL AUTO_INCREMENT,
   `api_id` int(11) NOT NULL,
   `ip` varchar(40) NOT NULL,
-  PRIMARY KEY (`api_ip_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`api_ip_id`),
+  KEY `idx_api` (`api_id`),
+  CONSTRAINT `fk_api_ip_to_api` FOREIGN KEY (`api_id`) REFERENCES `table_api` (`api_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_api_session` (
   `api_session_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -39,53 +46,32 @@ CREATE TABLE `table_api_session` (
   `ip` varchar(40) NOT NULL,
   `date_added` datetime NOT NULL,
   `date_modified` datetime NOT NULL,
-  PRIMARY KEY (`api_session_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_attribute` (
-  `attribute_id` int(11) NOT NULL AUTO_INCREMENT,
-  `attribute_group_id` int(11) NOT NULL,
-  `sort_order` int(3) NOT NULL,
-  PRIMARY KEY (`attribute_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_attribute_description` (
-  `attribute_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
-  `name` varchar(64) NOT NULL,
-  PRIMARY KEY (`attribute_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_attribute_group` (
-  `attribute_group_id` int(11) NOT NULL AUTO_INCREMENT,
-  `sort_order` int(3) NOT NULL,
-  PRIMARY KEY (`attribute_group_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_attribute_group_description` (
-  `attribute_group_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
-  `name` varchar(64) NOT NULL,
-  PRIMARY KEY (`attribute_group_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`api_session_id`),
+  KEY `idx_api3` (`api_id`),
+  KEY `idx_session_to_api` (`session_id`),
+  CONSTRAINT `api_session_to_api` FOREIGN KEY (`api_id`) REFERENCES `table_api` (`api_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_session_to_api` FOREIGN KEY (`session_id`) REFERENCES `table_session` (`session_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_banner` (
   `banner_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(64) NOT NULL,
   `status` tinyint(1) NOT NULL,
   PRIMARY KEY (`banner_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_banner_image` (
   `banner_image_id` int(11) NOT NULL AUTO_INCREMENT,
   `banner_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
   `title` varchar(64) NOT NULL,
   `link` varchar(255) NOT NULL,
   `image` varchar(255) NOT NULL,
   `sort_order` int(3) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`banner_image_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=188 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`banner_image_id`),
+  KEY `FK_banner_idx` (`banner_id`),
+  KEY `IDX_banner` (`banner_id`),
+  CONSTRAINT `FK_from_banner` FOREIGN KEY (`banner_id`) REFERENCES `table_banner` (`banner_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=353 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_cart` (
   `cart_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
@@ -98,13 +84,27 @@ CREATE TABLE `table_cart` (
   `quantity` int(5) NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`cart_id`),
-  KEY `cart_id` (`api_id`,`customer_id`,`session_id`,`product_id`,`recurring_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
+  KEY `idx_customer` (`customer_id`),
+  KEY `idx_session` (`session_id`),
+  KEY `idx_product` (`product_id`),
+  KEY `idx_recurring` (`recurring_id`),
+  KEY `fk_api_idx` (`api_id`),
+  CONSTRAINT `fk_api` FOREIGN KEY (`api_id`) REFERENCES `table_api` (`api_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_customer` FOREIGN KEY (`customer_id`) REFERENCES `table_customer` (`customer_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_product` FOREIGN KEY (`product_id`) REFERENCES `table_product` (`product_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_recurring` FOREIGN KEY (`recurring_id`) REFERENCES `table_recurring` (`recurring_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_session` FOREIGN KEY (`session_id`) REFERENCES `table_session` (`session_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_category` (
   `category_id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `meta_title` varchar(255) NOT NULL,
+  `meta_description` varchar(255) NOT NULL,
+  `meta_keyword` varchar(255) NOT NULL,
   `image` varchar(255) DEFAULT NULL,
-  `parent_id` int(11) NOT NULL DEFAULT 0,
+  `parent_id` int(11) DEFAULT NULL,
   `top` tinyint(1) NOT NULL,
   `column` int(3) NOT NULL,
   `sort_order` int(3) NOT NULL DEFAULT 0,
@@ -112,46 +112,16 @@ CREATE TABLE `table_category` (
   `date_added` datetime NOT NULL,
   `date_modified` datetime NOT NULL,
   PRIMARY KEY (`category_id`),
-  KEY `parent_id` (`parent_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=79 DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_category_description` (
-  `category_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `description` text NOT NULL,
-  `meta_title` varchar(255) NOT NULL,
-  `meta_description` varchar(255) NOT NULL,
-  `meta_keyword` varchar(255) NOT NULL,
-  PRIMARY KEY (`category_id`,`language_id`),
-  KEY `name` (`name`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_category_filter` (
-  `category_id` int(11) NOT NULL,
-  `filter_id` int(11) NOT NULL,
-  PRIMARY KEY (`category_id`,`filter_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  KEY `parent_id` (`parent_id`),
+  CONSTRAINT `FK_category` FOREIGN KEY (`parent_id`) REFERENCES `table_category` (`category_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=111 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_category_path` (
   `category_id` int(11) NOT NULL,
   `path_id` int(11) NOT NULL,
   `level` int(11) NOT NULL,
   PRIMARY KEY (`category_id`,`path_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_category_to_layout` (
-  `category_id` int(11) NOT NULL,
-  `store_id` int(11) NOT NULL,
-  `layout_id` int(11) NOT NULL,
-  PRIMARY KEY (`category_id`,`store_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_category_to_store` (
-  `category_id` int(11) NOT NULL,
-  `store_id` int(11) NOT NULL,
-  PRIMARY KEY (`category_id`,`store_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_country` (
   `country_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -162,7 +132,7 @@ CREATE TABLE `table_country` (
   `postcode_required` tinyint(1) NOT NULL,
   `status` tinyint(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`country_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=258 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=258 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_coupon` (
   `coupon_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -173,20 +143,22 @@ CREATE TABLE `table_coupon` (
   `logged` tinyint(1) NOT NULL,
   `shipping` tinyint(1) NOT NULL,
   `total` decimal(15,4) NOT NULL,
-  `date_start` date NOT NULL DEFAULT '0000-00-00',
-  `date_end` date NOT NULL DEFAULT '0000-00-00',
+  `date_start` date NOT NULL DEFAULT '2020-01-01',
+  `date_end` date NOT NULL DEFAULT '2020-01-01',
   `uses_total` int(11) NOT NULL,
   `uses_customer` varchar(11) NOT NULL,
   `status` tinyint(1) NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`coupon_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_coupon_category` (
   `coupon_id` int(11) NOT NULL,
   `category_id` int(11) NOT NULL,
-  PRIMARY KEY (`coupon_id`,`category_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`coupon_id`,`category_id`),
+  KEY `idx_cupom2` (`coupon_id`),
+  KEY `idx_category2` (`category_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_coupon_history` (
   `coupon_history_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -195,15 +167,25 @@ CREATE TABLE `table_coupon_history` (
   `customer_id` int(11) NOT NULL,
   `amount` decimal(15,4) NOT NULL,
   `date_added` datetime NOT NULL,
-  PRIMARY KEY (`coupon_history_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`coupon_history_id`),
+  KEY `idx_coupon4` (`coupon_id`),
+  KEY `idx_order4` (`order_id`),
+  KEY `Idx_customer` (`customer_id`),
+  CONSTRAINT `fk_coupon_history_to_coupon` FOREIGN KEY (`coupon_id`) REFERENCES `table_coupon` (`coupon_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_coupon_history_to_customer` FOREIGN KEY (`customer_id`) REFERENCES `table_customer` (`customer_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_coupon_history_to_order` FOREIGN KEY (`order_id`) REFERENCES `table_order` (`order_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_coupon_product` (
   `coupon_product_id` int(11) NOT NULL AUTO_INCREMENT,
   `coupon_id` int(11) NOT NULL,
   `product_id` int(11) NOT NULL,
-  PRIMARY KEY (`coupon_product_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`coupon_product_id`),
+  KEY `idx_coupon8` (`coupon_id`),
+  KEY `idx_product8` (`product_id`),
+  CONSTRAINT `fk_coupon_product_to_coupon` FOREIGN KEY (`coupon_id`) REFERENCES `table_coupon` (`coupon_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_coupon_product_to_product` FOREIGN KEY (`product_id`) REFERENCES `table_product` (`product_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_currency` (
   `currency_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -216,47 +198,7 @@ CREATE TABLE `table_currency` (
   `status` tinyint(1) NOT NULL,
   `date_modified` datetime NOT NULL,
   PRIMARY KEY (`currency_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_custom_field` (
-  `custom_field_id` int(11) NOT NULL AUTO_INCREMENT,
-  `type` varchar(32) NOT NULL,
-  `value` text NOT NULL,
-  `validation` varchar(255) NOT NULL,
-  `location` varchar(10) NOT NULL,
-  `status` tinyint(1) NOT NULL,
-  `sort_order` int(3) NOT NULL,
-  PRIMARY KEY (`custom_field_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_custom_field_customer_group` (
-  `custom_field_id` int(11) NOT NULL,
-  `customer_group_id` int(11) NOT NULL,
-  `required` tinyint(1) NOT NULL,
-  PRIMARY KEY (`custom_field_id`,`customer_group_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_custom_field_description` (
-  `custom_field_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
-  `name` varchar(128) NOT NULL,
-  PRIMARY KEY (`custom_field_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_custom_field_value` (
-  `custom_field_value_id` int(11) NOT NULL AUTO_INCREMENT,
-  `custom_field_id` int(11) NOT NULL,
-  `sort_order` int(3) NOT NULL,
-  PRIMARY KEY (`custom_field_value_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_custom_field_value_description` (
-  `custom_field_value_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
-  `custom_field_id` int(11) NOT NULL,
-  `name` varchar(128) NOT NULL,
-  PRIMARY KEY (`custom_field_value_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_customer` (
   `customer_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -281,8 +223,14 @@ CREATE TABLE `table_customer` (
   `token` text NOT NULL,
   `code` varchar(40) NOT NULL,
   `date_added` datetime NOT NULL,
-  PRIMARY KEY (`customer_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`customer_id`),
+  KEY `idx_customer_group9` (`customer_group_id`),
+  KEY `idx_store9` (`store_id`),
+  KEY `idx_address9` (`address_id`),
+  CONSTRAINT `fk_customer_to_address` FOREIGN KEY (`address_id`) REFERENCES `table_address` (`address_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_customer_to_customer_group` FOREIGN KEY (`customer_group_id`) REFERENCES `table_customer_group` (`customer_group_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_customer_to_store` FOREIGN KEY (`store_id`) REFERENCES `table_store` (`store_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_customer_activity` (
   `customer_activity_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -291,8 +239,10 @@ CREATE TABLE `table_customer_activity` (
   `data` text NOT NULL,
   `ip` varchar(40) NOT NULL,
   `date_added` datetime NOT NULL,
-  PRIMARY KEY (`customer_activity_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`customer_activity_id`),
+  KEY `idx_customer` (`customer_id`),
+  CONSTRAINT `fk_customer_activity_to_customer` FOREIGN KEY (`customer_id`) REFERENCES `table_customer` (`customer_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_customer_affiliate` (
   `customer_id` int(11) NOT NULL,
@@ -313,38 +263,36 @@ CREATE TABLE `table_customer_affiliate` (
   `status` tinyint(1) NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`customer_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_customer_approval` (
   `customer_approval_id` int(11) NOT NULL AUTO_INCREMENT,
   `customer_id` int(11) NOT NULL,
   `type` varchar(9) NOT NULL,
   `date_added` datetime NOT NULL,
-  PRIMARY KEY (`customer_approval_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`customer_approval_id`),
+  KEY `idx_customer10` (`customer_id`),
+  CONSTRAINT `fk_customer_approval_to_customer` FOREIGN KEY (`customer_id`) REFERENCES `table_customer` (`customer_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_customer_group` (
   `customer_group_id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(32) NOT NULL,
+  `description` text NOT NULL,
   `approval` int(1) NOT NULL,
   `sort_order` int(3) NOT NULL,
   PRIMARY KEY (`customer_group_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_customer_group_description` (
-  `customer_group_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
-  `name` varchar(32) NOT NULL,
-  `description` text NOT NULL,
-  PRIMARY KEY (`customer_group_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_customer_history` (
   `customer_history_id` int(11) NOT NULL AUTO_INCREMENT,
   `customer_id` int(11) NOT NULL,
   `comment` text NOT NULL,
   `date_added` datetime NOT NULL,
-  PRIMARY KEY (`customer_history_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`customer_history_id`),
+  KEY `idx_customer` (`customer_id`),
+  CONSTRAINT `fk_customer_history_to_customer` FOREIGN KEY (`customer_id`) REFERENCES `table_customer` (`customer_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_customer_ip` (
   `customer_ip_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -352,8 +300,10 @@ CREATE TABLE `table_customer_ip` (
   `ip` varchar(40) NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`customer_ip_id`),
-  KEY `ip` (`ip`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+  KEY `ip` (`ip`),
+  KEY `idx_customer` (`customer_id`),
+  CONSTRAINT `fk_customer_ip_to_customer` FOREIGN KEY (`customer_id`) REFERENCES `table_customer` (`customer_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_customer_login` (
   `customer_login_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -365,7 +315,7 @@ CREATE TABLE `table_customer_login` (
   PRIMARY KEY (`customer_login_id`),
   KEY `email` (`email`),
   KEY `ip` (`ip`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_customer_online` (
   `ip` varchar(40) NOT NULL,
@@ -373,8 +323,10 @@ CREATE TABLE `table_customer_online` (
   `url` text NOT NULL,
   `referer` text NOT NULL,
   `date_added` datetime NOT NULL,
-  PRIMARY KEY (`ip`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`ip`),
+  KEY `idx_customer` (`customer_id`),
+  CONSTRAINT `fk_customer_online_to_customer` FOREIGN KEY (`customer_id`) REFERENCES `table_customer` (`customer_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_customer_reward` (
   `customer_reward_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -383,8 +335,12 @@ CREATE TABLE `table_customer_reward` (
   `description` text NOT NULL,
   `points` int(8) NOT NULL DEFAULT 0,
   `date_added` datetime NOT NULL,
-  PRIMARY KEY (`customer_reward_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`customer_reward_id`),
+  KEY `idx_customer` (`customer_id`),
+  KEY `idx_order` (`order_id`),
+  CONSTRAINT `fk_customer_reward_to_customer` FOREIGN KEY (`customer_id`) REFERENCES `table_customer` (`customer_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_customer_reward_to_order` FOREIGN KEY (`order_id`) REFERENCES `table_order` (`order_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_customer_search` (
   `customer_search_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -398,8 +354,12 @@ CREATE TABLE `table_customer_search` (
   `products` int(11) NOT NULL,
   `ip` varchar(40) NOT NULL,
   `date_added` datetime NOT NULL,
-  PRIMARY KEY (`customer_search_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=106 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`customer_search_id`),
+  KEY `idx_store` (`store_id`),
+  KEY `idx_customer` (`customer_id`),
+  KEY `idx_category` (`category_id`),
+  CONSTRAINT `fk_customer_search_to_category` FOREIGN KEY (`category_id`) REFERENCES `table_category` (`category_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_customer_transaction` (
   `customer_transaction_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -408,30 +368,23 @@ CREATE TABLE `table_customer_transaction` (
   `description` text NOT NULL,
   `amount` decimal(15,4) NOT NULL,
   `date_added` datetime NOT NULL,
-  PRIMARY KEY (`customer_transaction_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`customer_transaction_id`),
+  KEY `idx_customer` (`customer_id`),
+  KEY `idx_order` (`order_id`),
+  CONSTRAINT `fk_customer_transacton_to_customer` FOREIGN KEY (`customer_id`) REFERENCES `table_customer` (`customer_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_customer_transacton_to_order` FOREIGN KEY (`order_id`) REFERENCES `table_order` (`order_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_customer_wishlist` (
   `customer_id` int(11) NOT NULL,
   `product_id` int(11) NOT NULL,
   `date_added` datetime NOT NULL,
-  PRIMARY KEY (`customer_id`,`product_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_download` (
-  `download_id` int(11) NOT NULL AUTO_INCREMENT,
-  `filename` varchar(160) NOT NULL,
-  `mask` varchar(128) NOT NULL,
-  `date_added` datetime NOT NULL,
-  PRIMARY KEY (`download_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_download_description` (
-  `download_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
-  `name` varchar(64) NOT NULL,
-  PRIMARY KEY (`download_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`customer_id`,`product_id`),
+  KEY `idx_customer` (`customer_id`,`product_id`),
+  KEY `idx_product` (`product_id`),
+  CONSTRAINT `fk_customer_wishlist_to_customer` FOREIGN KEY (`customer_id`) REFERENCES `table_customer` (`customer_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_customer_wishlist_to_product` FOREIGN KEY (`product_id`) REFERENCES `table_product` (`product_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_event` (
   `event_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -441,14 +394,14 @@ CREATE TABLE `table_event` (
   `status` tinyint(1) NOT NULL,
   `sort_order` int(3) NOT NULL,
   PRIMARY KEY (`event_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=46 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_extension` (
   `extension_id` int(11) NOT NULL AUTO_INCREMENT,
   `type` varchar(32) NOT NULL,
   `code` varchar(32) NOT NULL,
   PRIMARY KEY (`extension_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=50 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_extension_install` (
   `extension_install_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -456,7 +409,7 @@ CREATE TABLE `table_extension_install` (
   `filename` varchar(255) NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`extension_install_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_extension_path` (
   `extension_path_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -464,35 +417,38 @@ CREATE TABLE `table_extension_path` (
   `path` varchar(255) NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`extension_path_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=1527 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=528 DEFAULT CHARSET=utf8;
+
+CREATE TABLE `table_featured_product` (
+  `featured_id` int(11) NOT NULL,
+  `name` varchar(64) NOT NULL,
+  PRIMARY KEY (`featured_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `table_featured_to_product` (
+  `featured_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  PRIMARY KEY (`featured_id`,`product_id`),
+  KEY `featured_id` (`featured_id`),
+  KEY `idx_product` (`product_id`),
+  CONSTRAINT `fk_featured5_to_featured` FOREIGN KEY (`featured_id`) REFERENCES `table_featured_product` (`featured_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_featured5_to_product` FOREIGN KEY (`product_id`) REFERENCES `table_product` (`product_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_filter` (
   `filter_id` int(11) NOT NULL AUTO_INCREMENT,
   `filter_group_id` int(11) NOT NULL,
   `sort_order` int(3) NOT NULL,
-  PRIMARY KEY (`filter_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_filter_description` (
-  `filter_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
-  `filter_group_id` int(11) NOT NULL,
   `name` varchar(64) NOT NULL,
-  PRIMARY KEY (`filter_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`filter_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_filter_group` (
   `filter_group_id` int(11) NOT NULL AUTO_INCREMENT,
   `sort_order` int(3) NOT NULL,
+  `name` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`filter_group_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_filter_group_description` (
-  `filter_group_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
-  `name` varchar(64) NOT NULL,
-  PRIMARY KEY (`filter_group_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_geo_zone` (
   `geo_zone_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -501,7 +457,7 @@ CREATE TABLE `table_geo_zone` (
   `date_added` datetime NOT NULL,
   `date_modified` datetime NOT NULL,
   PRIMARY KEY (`geo_zone_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_googleshopping_category` (
   `google_product_category` varchar(10) NOT NULL,
@@ -509,7 +465,7 @@ CREATE TABLE `table_googleshopping_category` (
   `category_id` int(11) NOT NULL,
   PRIMARY KEY (`google_product_category`,`store_id`),
   KEY `category_id_store_id` (`category_id`,`store_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_googleshopping_product` (
   `product_advertise_google_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
@@ -536,7 +492,7 @@ CREATE TABLE `table_googleshopping_product` (
   `is_modified` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`product_advertise_google_id`),
   UNIQUE KEY `product_id_store_id` (`product_id`,`store_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_googleshopping_product_status` (
   `product_id` int(11) NOT NULL DEFAULT 0,
@@ -547,14 +503,14 @@ CREATE TABLE `table_googleshopping_product_status` (
   `item_level_issues` text NOT NULL,
   `google_expiration_date` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`product_id`,`store_id`,`product_variation_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_googleshopping_product_target` (
   `product_id` int(11) NOT NULL,
   `store_id` int(11) NOT NULL DEFAULT 0,
   `advertise_google_target_id` int(11) unsigned NOT NULL,
   PRIMARY KEY (`product_id`,`advertise_google_target_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_googleshopping_target` (
   `advertise_google_target_id` int(11) unsigned NOT NULL,
@@ -568,39 +524,20 @@ CREATE TABLE `table_googleshopping_target` (
   `roas` int(11) NOT NULL DEFAULT 0,
   PRIMARY KEY (`advertise_google_target_id`),
   KEY `store_id` (`store_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_information` (
-  `information_id` int(11) NOT NULL AUTO_INCREMENT,
-  `bottom` int(1) NOT NULL DEFAULT 0,
-  `sort_order` int(3) NOT NULL DEFAULT 0,
-  `status` tinyint(1) NOT NULL DEFAULT 1,
-  PRIMARY KEY (`information_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_information_description` (
   `information_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
   `title` varchar(64) NOT NULL,
   `description` mediumtext NOT NULL,
   `meta_title` varchar(255) NOT NULL,
   `meta_description` varchar(255) NOT NULL,
   `meta_keyword` varchar(255) NOT NULL,
-  PRIMARY KEY (`information_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_information_to_layout` (
-  `information_id` int(11) NOT NULL,
-  `store_id` int(11) NOT NULL,
-  `layout_id` int(11) NOT NULL,
-  PRIMARY KEY (`information_id`,`store_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_information_to_store` (
-  `information_id` int(11) NOT NULL,
-  `store_id` int(11) NOT NULL,
-  PRIMARY KEY (`information_id`,`store_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  `bottom` int(1) NOT NULL DEFAULT 0,
+  `sort_order` int(3) NOT NULL DEFAULT 0,
+  `status` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`information_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_language` (
   `language_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -613,13 +550,13 @@ CREATE TABLE `table_language` (
   `status` tinyint(1) NOT NULL,
   PRIMARY KEY (`language_id`),
   KEY `name` (`name`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_layout` (
   `layout_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(64) NOT NULL,
   PRIMARY KEY (`layout_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_layout_module` (
   `layout_module_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -628,7 +565,7 @@ CREATE TABLE `table_layout_module` (
   `position` varchar(14) NOT NULL,
   `sort_order` int(3) NOT NULL,
   PRIMARY KEY (`layout_module_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=102 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=106 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_layout_route` (
   `layout_route_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -636,21 +573,15 @@ CREATE TABLE `table_layout_route` (
   `store_id` int(11) NOT NULL,
   `route` varchar(64) NOT NULL,
   PRIMARY KEY (`layout_route_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=61 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=62 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_length_class` (
   `length_class_id` int(11) NOT NULL AUTO_INCREMENT,
   `value` decimal(15,8) NOT NULL,
-  PRIMARY KEY (`length_class_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_length_class_description` (
-  `length_class_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
   `title` varchar(32) NOT NULL,
   `unit` varchar(4) NOT NULL,
-  PRIMARY KEY (`length_class_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`length_class_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_location` (
   `location_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -664,7 +595,7 @@ CREATE TABLE `table_location` (
   `comment` text NOT NULL,
   PRIMARY KEY (`location_id`),
   KEY `name` (`name`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_manufacturer` (
   `manufacturer_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -672,13 +603,7 @@ CREATE TABLE `table_manufacturer` (
   `image` varchar(255) DEFAULT NULL,
   `sort_order` int(3) NOT NULL,
   PRIMARY KEY (`manufacturer_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=171 DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_manufacturer_to_store` (
-  `manufacturer_id` int(11) NOT NULL,
-  `store_id` int(11) NOT NULL,
-  PRIMARY KEY (`manufacturer_id`,`store_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=177 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_marketing` (
   `marketing_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -688,7 +613,7 @@ CREATE TABLE `table_marketing` (
   `clicks` int(5) NOT NULL DEFAULT 0,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`marketing_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_modification` (
   `modification_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -702,7 +627,7 @@ CREATE TABLE `table_modification` (
   `status` tinyint(1) NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`modification_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_module` (
   `module_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -710,37 +635,24 @@ CREATE TABLE `table_module` (
   `code` varchar(32) NOT NULL,
   `setting` text NOT NULL,
   PRIMARY KEY (`module_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=35 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_option` (
   `option_id` int(11) NOT NULL AUTO_INCREMENT,
   `type` varchar(32) NOT NULL,
   `sort_order` int(3) NOT NULL,
-  PRIMARY KEY (`option_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=20 DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_option_description` (
-  `option_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
   `name` varchar(128) NOT NULL,
-  PRIMARY KEY (`option_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`option_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_option_value` (
   `option_value_id` int(11) NOT NULL AUTO_INCREMENT,
   `option_id` int(11) NOT NULL,
   `image` varchar(255) NOT NULL,
   `sort_order` int(3) NOT NULL,
-  PRIMARY KEY (`option_value_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=105 DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_option_value_description` (
-  `option_value_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
-  `option_id` int(11) NOT NULL,
   `name` varchar(128) NOT NULL,
-  PRIMARY KEY (`option_value_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`option_value_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=126 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_order` (
   `order_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -804,8 +716,24 @@ CREATE TABLE `table_order` (
   `accept_language` varchar(255) NOT NULL,
   `date_added` datetime NOT NULL,
   `date_modified` datetime NOT NULL,
-  PRIMARY KEY (`order_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`order_id`),
+  KEY `idx_customer` (`customer_id`),
+  KEY `idx_store` (`store_id`),
+  KEY `idx_customer_group` (`customer_group_id`),
+  KEY `idx_payment_country` (`payment_country_id`),
+  KEY `idx_payment_zone` (`payment_zone_id`),
+  KEY `idx_shipping_country` (`shipping_country_id`),
+  KEY `idx_shipping_zone` (`shipping_zone_id`),
+  KEY `idx_marketing` (`marketing_id`),
+  KEY `idx_currency` (`currency_id`),
+  KEY `idx_order_status` (`order_status_id`),
+  CONSTRAINT `fk_currency` FOREIGN KEY (`currency_id`) REFERENCES `table_currency` (`currency_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_customerB` FOREIGN KEY (`customer_id`) REFERENCES `table_customer` (`customer_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_customer_group` FOREIGN KEY (`customer_group_id`) REFERENCES `table_customer_group` (`customer_group_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_marketing` FOREIGN KEY (`marketing_id`) REFERENCES `table_marketing` (`marketing_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_status` FOREIGN KEY (`order_status_id`) REFERENCES `table_order_status` (`order_status_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_store` FOREIGN KEY (`store_id`) REFERENCES `table_store` (`store_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_order_history` (
   `order_history_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -814,8 +742,12 @@ CREATE TABLE `table_order_history` (
   `notify` tinyint(1) NOT NULL DEFAULT 0,
   `comment` text NOT NULL,
   `date_added` datetime NOT NULL,
-  PRIMARY KEY (`order_history_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`order_history_id`),
+  KEY `idx_order` (`order_id`),
+  KEY `idx_order_status` (`order_status_id`),
+  CONSTRAINT `fk_order_history_to_order` FOREIGN KEY (`order_id`) REFERENCES `table_order` (`order_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_order_history_to_order_status` FOREIGN KEY (`order_status_id`) REFERENCES `table_order_status` (`order_status_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_order_option` (
   `order_option_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -826,8 +758,16 @@ CREATE TABLE `table_order_option` (
   `name` varchar(255) NOT NULL,
   `value` text NOT NULL,
   `type` varchar(32) NOT NULL,
-  PRIMARY KEY (`order_option_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`order_option_id`),
+  KEY `idx_order` (`order_id`),
+  KEY `idx_order_product` (`order_product_id`),
+  KEY `idx_product_option` (`product_option_id`),
+  KEY `idx_product_option_value` (`product_option_value_id`),
+  CONSTRAINT `fk_order_option_to_order` FOREIGN KEY (`order_id`) REFERENCES `table_order` (`order_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_order_option_to_order_product` FOREIGN KEY (`order_product_id`) REFERENCES `table_order_product` (`order_product_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_order_option_to_product_option_value` FOREIGN KEY (`product_option_value_id`) REFERENCES `table_product_option_value` (`product_option_value_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_order_option_to_producti_option` FOREIGN KEY (`product_option_id`) REFERENCES `table_product_option` (`product_option_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_order_product` (
   `order_product_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -841,8 +781,10 @@ CREATE TABLE `table_order_product` (
   `tax` decimal(15,4) NOT NULL DEFAULT 0.0000,
   `reward` int(8) NOT NULL,
   PRIMARY KEY (`order_product_id`),
-  KEY `order_id` (`order_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  KEY `order_id` (`order_id`),
+  KEY `idx_product` (`product_id`),
+  CONSTRAINT `fk_order_product_to_order` FOREIGN KEY (`order_id`) REFERENCES `table_order` (`order_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_order_recurring` (
   `order_recurring_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -865,8 +807,13 @@ CREATE TABLE `table_order_recurring` (
   `trial_price` decimal(10,4) NOT NULL,
   `status` tinyint(4) NOT NULL,
   `date_added` datetime NOT NULL,
-  PRIMARY KEY (`order_recurring_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`order_recurring_id`),
+  KEY `idx_order` (`order_id`),
+  KEY `idx_product` (`product_id`),
+  KEY `idx_recurring` (`recurring_id`),
+  CONSTRAINT `fk_order_recurring_to_order` FOREIGN KEY (`order_id`) REFERENCES `table_order` (`order_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_order_recurring_to_recurring` FOREIGN KEY (`recurring_id`) REFERENCES `table_recurring` (`recurring_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_order_recurring_transaction` (
   `order_recurring_transaction_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -875,8 +822,9 @@ CREATE TABLE `table_order_recurring_transaction` (
   `type` varchar(255) NOT NULL,
   `amount` decimal(10,4) NOT NULL,
   `date_added` datetime NOT NULL,
-  PRIMARY KEY (`order_recurring_transaction_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`order_recurring_transaction_id`),
+  KEY `idx_recurring` (`order_recurring_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_order_shipment` (
   `order_shipment_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -884,15 +832,16 @@ CREATE TABLE `table_order_shipment` (
   `date_added` datetime NOT NULL,
   `shipping_courier_id` varchar(255) NOT NULL DEFAULT '',
   `tracking_number` varchar(255) NOT NULL DEFAULT '',
-  PRIMARY KEY (`order_shipment_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`order_shipment_id`),
+  KEY `idx_order` (`order_id`),
+  KEY `idx_shipping_courier` (`shipping_courier_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_order_status` (
   `order_status_id` int(11) NOT NULL AUTO_INCREMENT,
-  `language_id` int(11) NOT NULL,
   `name` varchar(32) NOT NULL,
-  PRIMARY KEY (`order_status_id`,`language_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=17 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`order_status_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_order_total` (
   `order_total_id` int(10) NOT NULL AUTO_INCREMENT,
@@ -902,8 +851,10 @@ CREATE TABLE `table_order_total` (
   `value` decimal(15,4) NOT NULL DEFAULT 0.0000,
   `sort_order` int(3) NOT NULL,
   PRIMARY KEY (`order_total_id`),
-  KEY `order_id` (`order_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  KEY `order_id` (`order_id`),
+  KEY `idx_order` (`order_id`),
+  CONSTRAINT `fk_order_total_to_order` FOREIGN KEY (`order_id`) REFERENCES `table_order` (`order_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_order_voucher` (
   `order_voucher_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -918,11 +869,20 @@ CREATE TABLE `table_order_voucher` (
   `voucher_theme_id` int(11) NOT NULL,
   `message` text NOT NULL,
   `amount` decimal(15,4) NOT NULL,
-  PRIMARY KEY (`order_voucher_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`order_voucher_id`),
+  KEY `idx_order` (`order_id`),
+  KEY `idx_voucher` (`voucher_id`),
+  KEY `idx_voucher_theme` (`voucher_theme_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_product` (
-  `product_id` int(11) NOT NULL AUTO_INCREMENT,
+  `product_id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text NOT NULL,
+  `tag` text NOT NULL,
+  `meta_title` varchar(255) NOT NULL,
+  `meta_description` varchar(255) NOT NULL,
+  `meta_keyword` varchar(255) NOT NULL,
   `model` varchar(64) NOT NULL,
   `sku` varchar(64) NOT NULL,
   `upc` varchar(12) NOT NULL,
@@ -939,7 +899,7 @@ CREATE TABLE `table_product` (
   `price` decimal(15,4) NOT NULL DEFAULT 0.0000,
   `points` int(8) NOT NULL DEFAULT 0,
   `tax_class_id` int(11) NOT NULL,
-  `date_available` date NOT NULL DEFAULT '0000-00-00',
+  `date_available` date NOT NULL DEFAULT '2020-01-01',
   `weight` decimal(15,8) NOT NULL DEFAULT 0.00000000,
   `weight_class_id` int(11) NOT NULL DEFAULT 0,
   `length` decimal(15,8) NOT NULL DEFAULT 0.00000000,
@@ -953,8 +913,18 @@ CREATE TABLE `table_product` (
   `viewed` int(5) NOT NULL DEFAULT 0,
   `date_added` datetime NOT NULL,
   `date_modified` datetime NOT NULL,
-  PRIMARY KEY (`product_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=59598110 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`product_id`),
+  KEY `idx_weight_class` (`weight_class_id`),
+  KEY `idx_stock_status` (`stock_status_id`),
+  KEY `idx_manufacturer` (`manufacturer_id`),
+  KEY `idx_tax_class_id` (`tax_class_id`),
+  KEY `idx_length_class` (`length_class_id`),
+  CONSTRAINT `fk_product_to_length_class` FOREIGN KEY (`length_class_id`) REFERENCES `table_length_class` (`length_class_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_product_to_manufacturer` FOREIGN KEY (`manufacturer_id`) REFERENCES `table_manufacturer` (`manufacturer_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_product_to_stock_status` FOREIGN KEY (`stock_status_id`) REFERENCES `table_stock_status` (`stock_status_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_product_to_tax_class` FOREIGN KEY (`tax_class_id`) REFERENCES `table_tax_class` (`tax_class_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_product_to_weight_class` FOREIGN KEY (`weight_class_id`) REFERENCES `table_weight_class` (`weight_class_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_product_attribute` (
   `product_id` int(11) NOT NULL,
@@ -962,20 +932,7 @@ CREATE TABLE `table_product_attribute` (
   `language_id` int(11) NOT NULL,
   `text` text NOT NULL,
   PRIMARY KEY (`product_id`,`attribute_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_product_description` (
-  `product_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `description` text NOT NULL,
-  `tag` text NOT NULL,
-  `meta_title` varchar(255) NOT NULL,
-  `meta_description` varchar(255) NOT NULL,
-  `meta_keyword` varchar(255) NOT NULL,
-  PRIMARY KEY (`product_id`,`language_id`),
-  KEY `name` (`name`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_product_discount` (
   `product_discount_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -984,17 +941,17 @@ CREATE TABLE `table_product_discount` (
   `quantity` int(4) NOT NULL DEFAULT 0,
   `priority` int(5) NOT NULL DEFAULT 1,
   `price` decimal(15,4) NOT NULL DEFAULT 0.0000,
-  `date_start` date NOT NULL DEFAULT '0000-00-00',
-  `date_end` date NOT NULL DEFAULT '0000-00-00',
+  `date_start` date NOT NULL DEFAULT '2020-01-01',
+  `date_end` date NOT NULL DEFAULT '2020-01-01',
   PRIMARY KEY (`product_discount_id`),
   KEY `product_id` (`product_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_product_filter` (
   `product_id` int(11) NOT NULL,
   `filter_id` int(11) NOT NULL,
   PRIMARY KEY (`product_id`,`filter_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_product_image` (
   `product_image_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1003,7 +960,7 @@ CREATE TABLE `table_product_image` (
   `sort_order` int(3) NOT NULL DEFAULT 0,
   PRIMARY KEY (`product_image_id`),
   KEY `product_id` (`product_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2358 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2373 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_product_option` (
   `product_option_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1012,7 +969,7 @@ CREATE TABLE `table_product_option` (
   `value` text NOT NULL,
   `required` tinyint(1) NOT NULL,
   PRIMARY KEY (`product_option_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=237 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_product_option_value` (
   `product_option_value_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1029,20 +986,20 @@ CREATE TABLE `table_product_option_value` (
   `weight` decimal(15,8) NOT NULL,
   `weight_prefix` varchar(1) NOT NULL,
   PRIMARY KEY (`product_option_value_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=37 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=81 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_product_recurring` (
   `product_id` int(11) NOT NULL,
   `recurring_id` int(11) NOT NULL,
   `customer_group_id` int(11) NOT NULL,
   PRIMARY KEY (`product_id`,`recurring_id`,`customer_group_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_product_related` (
   `product_id` int(11) NOT NULL,
   `related_id` int(11) NOT NULL,
   PRIMARY KEY (`product_id`,`related_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_product_reward` (
   `product_reward_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1050,7 +1007,7 @@ CREATE TABLE `table_product_reward` (
   `customer_group_id` int(11) NOT NULL DEFAULT 0,
   `points` int(8) NOT NULL DEFAULT 0,
   PRIMARY KEY (`product_reward_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=547 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=546 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_product_special` (
   `product_special_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1058,40 +1015,26 @@ CREATE TABLE `table_product_special` (
   `customer_group_id` int(11) NOT NULL,
   `priority` int(5) NOT NULL DEFAULT 1,
   `price` decimal(15,4) NOT NULL DEFAULT 0.0000,
-  `date_start` date NOT NULL DEFAULT '0000-00-00',
-  `date_end` date NOT NULL DEFAULT '0000-00-00',
+  `date_start` date NOT NULL DEFAULT '2020-01-01',
+  `date_end` date NOT NULL DEFAULT '2020-01-01',
   PRIMARY KEY (`product_special_id`),
-  KEY `product_id` (`product_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=440 DEFAULT CHARSET=utf8;
+  KEY `product_id` (`product_id`),
+  KEY `idx_customer_group` (`customer_group_id`),
+  CONSTRAINT `fk_product_special_to_customer_groupe` FOREIGN KEY (`customer_group_id`) REFERENCES `table_customer_group` (`customer_group_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_product_special_to_product` FOREIGN KEY (`product_id`) REFERENCES `table_product` (`product_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=440 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_product_to_category` (
   `product_id` int(11) NOT NULL,
   `category_id` int(11) NOT NULL,
   PRIMARY KEY (`product_id`,`category_id`),
-  KEY `category_id` (`category_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_product_to_download` (
-  `product_id` int(11) NOT NULL,
-  `download_id` int(11) NOT NULL,
-  PRIMARY KEY (`product_id`,`download_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_product_to_layout` (
-  `product_id` int(11) NOT NULL,
-  `store_id` int(11) NOT NULL,
-  `layout_id` int(11) NOT NULL,
-  PRIMARY KEY (`product_id`,`store_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_product_to_store` (
-  `product_id` int(11) NOT NULL,
-  `store_id` int(11) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`product_id`,`store_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  KEY `category_id` (`category_id`),
+  KEY `idx_product` (`product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_recurring` (
   `recurring_id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) DEFAULT NULL,
   `price` decimal(10,4) NOT NULL,
   `frequency` enum('day','week','semi_month','month','year') NOT NULL,
   `duration` int(10) unsigned NOT NULL,
@@ -1104,14 +1047,7 @@ CREATE TABLE `table_recurring` (
   `status` tinyint(4) NOT NULL,
   `sort_order` int(11) NOT NULL,
   PRIMARY KEY (`recurring_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_recurring_description` (
-  `recurring_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL,
-  PRIMARY KEY (`recurring_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_return` (
   `return_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1130,18 +1066,30 @@ CREATE TABLE `table_return` (
   `return_action_id` int(11) NOT NULL,
   `return_status_id` int(11) NOT NULL,
   `comment` text DEFAULT NULL,
-  `date_ordered` date NOT NULL DEFAULT '0000-00-00',
+  `date_ordered` date NOT NULL DEFAULT '2020-01-01',
   `date_added` datetime NOT NULL,
   `date_modified` datetime NOT NULL,
-  PRIMARY KEY (`return_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`return_id`),
+  KEY `idx_oder` (`order_id`),
+  KEY `idx_product` (`product_id`),
+  KEY `idx_customer` (`customer_id`),
+  KEY `idx_return_reason` (`return_reason_id`),
+  KEY `idx_action` (`return_action_id`),
+  KEY `idx_status` (`return_status_id`),
+  CONSTRAINT `fk_return_to_customer` FOREIGN KEY (`customer_id`) REFERENCES `table_customer` (`customer_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_return_to_order` FOREIGN KEY (`order_id`) REFERENCES `table_order` (`order_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_return_to_product` FOREIGN KEY (`product_id`) REFERENCES `table_product` (`product_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_return_to_return_action` FOREIGN KEY (`return_action_id`) REFERENCES `table_return_action` (`return_action_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_return_to_return_reason` FOREIGN KEY (`return_reason_id`) REFERENCES `table_return_reason` (`return_reason_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fk_return_to_return_status` FOREIGN KEY (`return_status_id`) REFERENCES `table_return_status` (`return_status_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_return_action` (
   `return_action_id` int(11) NOT NULL AUTO_INCREMENT,
   `language_id` int(11) NOT NULL DEFAULT 0,
   `name` varchar(64) NOT NULL,
   PRIMARY KEY (`return_action_id`,`language_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_return_history` (
   `return_history_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1151,21 +1099,21 @@ CREATE TABLE `table_return_history` (
   `comment` text NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`return_history_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_return_reason` (
   `return_reason_id` int(11) NOT NULL AUTO_INCREMENT,
   `language_id` int(11) NOT NULL DEFAULT 0,
   `name` varchar(128) NOT NULL,
   PRIMARY KEY (`return_reason_id`,`language_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_return_status` (
   `return_status_id` int(11) NOT NULL AUTO_INCREMENT,
   `language_id` int(11) NOT NULL DEFAULT 0,
   `name` varchar(32) NOT NULL,
   PRIMARY KEY (`return_status_id`,`language_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_review` (
   `review_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1179,7 +1127,7 @@ CREATE TABLE `table_review` (
   `date_modified` datetime NOT NULL,
   PRIMARY KEY (`review_id`),
   KEY `product_id` (`product_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_seo_url` (
   `seo_url_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1190,7 +1138,7 @@ CREATE TABLE `table_seo_url` (
   PRIMARY KEY (`seo_url_id`),
   KEY `query` (`query`),
   KEY `keyword` (`keyword`)
-) ENGINE=MyISAM AUTO_INCREMENT=844 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=829 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_session` (
   `session_id` varchar(32) NOT NULL,
@@ -1207,28 +1155,27 @@ CREATE TABLE `table_setting` (
   `value` text NOT NULL,
   `serialized` tinyint(1) NOT NULL,
   PRIMARY KEY (`setting_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=957 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1119 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_shipping_courier` (
   `shipping_courier_id` int(11) NOT NULL,
   `shipping_courier_code` varchar(255) NOT NULL DEFAULT '',
   `shipping_courier_name` varchar(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`shipping_courier_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_statistics` (
   `statistics_id` int(11) NOT NULL AUTO_INCREMENT,
   `code` varchar(64) NOT NULL,
   `value` decimal(15,4) NOT NULL,
   PRIMARY KEY (`statistics_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_stock_status` (
   `stock_status_id` int(11) NOT NULL AUTO_INCREMENT,
-  `language_id` int(11) NOT NULL,
   `name` varchar(32) NOT NULL,
-  PRIMARY KEY (`stock_status_id`,`language_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`stock_status_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_store` (
   `store_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1236,7 +1183,38 @@ CREATE TABLE `table_store` (
   `url` varchar(255) NOT NULL,
   `ssl` varchar(255) NOT NULL,
   PRIMARY KEY (`store_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+
+CREATE TABLE `table_store_to_category` (
+  `store_id` int(11) NOT NULL,
+  `category_id` int(11) NOT NULL,
+  PRIMARY KEY (`store_id`,`category_id`),
+  KEY `PK_store_id` (`store_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `table_store_to_featured` (
+  `store_id` int(11) NOT NULL,
+  `featured_id` int(11) NOT NULL,
+  PRIMARY KEY (`store_id`,`featured_id`),
+  KEY `PK_store_id` (`store_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `table_table_address` (
+  `address_id` int(11) NOT NULL AUTO_INCREMENT,
+  `customer_id` int(11) NOT NULL,
+  `firstname` varchar(32) NOT NULL,
+  `lastname` varchar(32) NOT NULL,
+  `company` varchar(40) NOT NULL,
+  `address_1` varchar(128) NOT NULL,
+  `address_2` varchar(128) NOT NULL,
+  `city` varchar(128) NOT NULL,
+  `postcode` varchar(10) NOT NULL,
+  `country_id` int(11) NOT NULL DEFAULT 0,
+  `zone_id` int(11) NOT NULL DEFAULT 0,
+  `custom_field` text NOT NULL,
+  PRIMARY KEY (`address_id`),
+  KEY `customer_id` (`customer_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_tax_class` (
   `tax_class_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1245,7 +1223,7 @@ CREATE TABLE `table_tax_class` (
   `date_added` datetime NOT NULL,
   `date_modified` datetime NOT NULL,
   PRIMARY KEY (`tax_class_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_tax_rate` (
   `tax_rate_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1256,13 +1234,13 @@ CREATE TABLE `table_tax_rate` (
   `date_added` datetime NOT NULL,
   `date_modified` datetime NOT NULL,
   PRIMARY KEY (`tax_rate_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=89 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=89 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_tax_rate_to_customer_group` (
   `tax_rate_id` int(11) NOT NULL,
   `customer_group_id` int(11) NOT NULL,
   PRIMARY KEY (`tax_rate_id`,`customer_group_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_tax_rule` (
   `tax_rule_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1271,7 +1249,7 @@ CREATE TABLE `table_tax_rule` (
   `based` varchar(10) NOT NULL,
   `priority` int(5) NOT NULL DEFAULT 1,
   PRIMARY KEY (`tax_rule_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=129 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=129 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_theme` (
   `theme_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1281,7 +1259,7 @@ CREATE TABLE `table_theme` (
   `code` mediumtext NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`theme_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_translation` (
   `translation_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1292,7 +1270,7 @@ CREATE TABLE `table_translation` (
   `value` text NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`translation_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_upload` (
   `upload_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1301,7 +1279,7 @@ CREATE TABLE `table_upload` (
   `code` varchar(255) NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`upload_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_user` (
   `user_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1317,15 +1295,17 @@ CREATE TABLE `table_user` (
   `ip` varchar(40) NOT NULL,
   `status` tinyint(1) NOT NULL,
   `date_added` datetime NOT NULL,
-  PRIMARY KEY (`user_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`user_id`),
+  KEY `idx_user_group` (`user_group_id`),
+  CONSTRAINT `fk_user_to_user_group` FOREIGN KEY (`user_group_id`) REFERENCES `table_user_group` (`user_group_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_user_group` (
   `user_group_id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(64) NOT NULL,
   `permission` text NOT NULL,
   PRIMARY KEY (`user_group_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_voucher` (
   `voucher_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1341,7 +1321,7 @@ CREATE TABLE `table_voucher` (
   `status` tinyint(1) NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`voucher_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_voucher_history` (
   `voucher_history_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1350,34 +1330,28 @@ CREATE TABLE `table_voucher_history` (
   `amount` decimal(15,4) NOT NULL,
   `date_added` datetime NOT NULL,
   PRIMARY KEY (`voucher_history_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_voucher_theme` (
   `voucher_theme_id` int(11) NOT NULL AUTO_INCREMENT,
   `image` varchar(255) NOT NULL,
   PRIMARY KEY (`voucher_theme_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_voucher_theme_description` (
   `voucher_theme_id` int(11) NOT NULL,
   `language_id` int(11) NOT NULL,
   `name` varchar(32) NOT NULL,
   PRIMARY KEY (`voucher_theme_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_weight_class` (
-  `weight_class_id` int(11) NOT NULL AUTO_INCREMENT,
-  `value` decimal(15,8) NOT NULL DEFAULT 0.00000000,
-  PRIMARY KEY (`weight_class_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
-
-CREATE TABLE `table_weight_class_description` (
   `weight_class_id` int(11) NOT NULL,
-  `language_id` int(11) NOT NULL,
   `title` varchar(32) NOT NULL,
   `unit` varchar(4) NOT NULL,
-  PRIMARY KEY (`weight_class_id`,`language_id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+  `value` decimal(15,8) NOT NULL DEFAULT 0.00000000,
+  PRIMARY KEY (`weight_class_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_zone` (
   `zone_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1385,8 +1359,10 @@ CREATE TABLE `table_zone` (
   `name` varchar(128) NOT NULL,
   `code` varchar(32) NOT NULL,
   `status` tinyint(1) NOT NULL DEFAULT 1,
-  PRIMARY KEY (`zone_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4239 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`zone_id`),
+  KEY `idx_country` (`country_id`),
+  CONSTRAINT `fk_zone_to_country` FOREIGN KEY (`country_id`) REFERENCES `table_country` (`country_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=4239 DEFAULT CHARSET=utf8;
 
 CREATE TABLE `table_zone_to_geo_zone` (
   `zone_to_geo_zone_id` int(11) NOT NULL AUTO_INCREMENT,
@@ -1395,5 +1371,11 @@ CREATE TABLE `table_zone_to_geo_zone` (
   `geo_zone_id` int(11) NOT NULL,
   `date_added` datetime NOT NULL,
   `date_modified` datetime NOT NULL,
-  PRIMARY KEY (`zone_to_geo_zone_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=111 DEFAULT CHARSET=utf8;
+  PRIMARY KEY (`zone_to_geo_zone_id`),
+  KEY `idx_zone_geo_to_zone` (`geo_zone_id`),
+  KEY `idx_zone3_to_zone_idx` (`zone_id`),
+  KEY `idx_country` (`country_id`),
+  CONSTRAINT `fk_zone23_to_zone` FOREIGN KEY (`zone_id`) REFERENCES `table_zone` (`zone_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fx_zone2geo_to_geo_zone` FOREIGN KEY (`geo_zone_id`) REFERENCES `table_geo_zone` (`geo_zone_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `fx_zone2geo_zone_to_country` FOREIGN KEY (`country_id`) REFERENCES `table_country` (`country_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=111 DEFAULT CHARSET=utf8;
